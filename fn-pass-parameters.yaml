@@ -1,0 +1,19 @@
+apiVersion: fn.kpt.dev/v1alpha1
+kind: StarlarkRun
+metadata:
+  name: fn-pass-parameters
+
+source: |
+  def extract_config(resources):
+    config_params = [resource for resource in resources if resource["kind"] == "ConfigMap" and resource["metadata"]["name"] == "parent-parameters"]
+    print("[INFO] Extract params from parent-parameter file")
+    config = config_params[0]["data"]
+    print("[INFO] Config parameters extracted from parent-parameter files", config)
+    return config
+    
+  def replace_to_subpackage(resources):
+    config = extract_config(ctx.resource_list["items"])
+    params_sub_1 = [resource for resource in resources if resource["kind"] == "ConfigMap" and resource["metadata"]["name"] == "subpackage-parameters"]
+    params_sub_1[0]["data"]["parent"] = config["parent"]
+  
+  replace_to_subpackage(ctx.resource_list["items"])
